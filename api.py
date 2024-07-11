@@ -1,13 +1,35 @@
 from flask import Blueprint, jsonify, request, make_response
-from flask_jwt_extended import create_access_token, create_refresh_token
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required
 from models import User, Organisation
-
+from schemas import UserSchema
 
 
 api_bp = Blueprint('api', __name__)
 
+@api_bp.get("/")
+def home():
+    return "Stage Two - Kindly Login/Register an account!", 200
+
+@api_bp.get('/users/all')
+def get_all_users():
+    page = request.args.get('page', default=1, type=int)
+    
+    per_page = request.args.get('per_page', default=3, type=int)
+    
+    users = User.query.paginate(
+        page= page,
+        per_page= per_page
+    )
+    
+    result = UserSchema().dump(users, many=True)
+    return jsonify(
+        {
+            "users": result
+        }
+    ), 200
 
 @api_bp.get('/users/<int:userId>')
+@jwt_required()
 def get_user(userId):
     try:
         user = User.user_by_userId(userId = userId)
@@ -26,6 +48,7 @@ def get_user(userId):
     
 
 @api_bp.get('/organisations')
+@jwt_required()
 def get_organisations():
 
     try:
@@ -44,6 +67,7 @@ def get_organisations():
     
 
 @api_bp.get('/organisations/<int:orgId>')
+@jwt_required()
 def get_organisation(orgId):
     try:
         organisation = Organisation.query.filter_by(orgId=orgId).first()
@@ -63,6 +87,7 @@ def get_organisation(orgId):
 
 
 @api_bp.post('/organisations')
+@jwt_required()
 def create_organisation():
     
     data = request.get_json()
@@ -94,33 +119,32 @@ def create_organisation():
         }
     ), 201)
         
-@api_bp.post('/organisations/<int:orgId>')
+@api_bp.patch('/organisations/<int:orgId>')
+@jwt_required()
 def add_user_organisation(orgId):
     data = request.get_json()
     
-    organisation = Organisation.organisation_by_orgId(orgId=orgId)
-    user = User.get_user_by_userId(userId= data.get('userId'))
-    if user is None:
+    organisation = Organisation.organisation_by_orgId(orgId==orgId)
+    user = User.user_by_userId(userId= data.get('userId'))
+    if user is not None:
+        # organisation = Organisation.query.filter_by(Organisation.orgId=orgId).first()
+        new_user = User(
+            userId = data.get("userId")
+        )
+        
+        new_user.save()
+        organisation.user.append(new_user)
+        
         return jsonify(
+                {
+                    "status": "success",
+                    "message": "User added to organisation successfully",
+                }
+            ), 200
+    
+    return jsonify(
             {
                 "status": "Bad request",
                 "message": "client error",
             }
-        ), 400
-        # organisation = Organisation.query.filter_by(orgId=orgId).first()
-    
-    new_user = User(
-        userId = data.get("userId")
-    )
-    
-    new_user.save()
-    organisation.user.append(new_user)
-    
-    return jsonify(
-            {
-                "status": "success",
-                "message": "User added to organisation successfully",
-            }
-        ), 200
-    
-        
+        ), 400   

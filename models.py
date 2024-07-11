@@ -60,6 +60,7 @@ class Organisation(db.Model):
     def __repr__(self):
         return f"<Organisation {self.name} title {self.description}>"
     
+    @classmethod
     def organisation_by_orgId(cls, orgId):
         return cls.query.filter_by(orgId = orgId).first()
     
