@@ -35,7 +35,7 @@ class User(db.Model):
     def get_user_by_username(cls,email):
         return cls.query.filter_by(email =email).first()
     
-    def get_user_by_userId(cls, userId):
+    def user_by_userId(cls, userId):
         return cls.query.filter_by(userId = userId).first()
     
     def save(self):

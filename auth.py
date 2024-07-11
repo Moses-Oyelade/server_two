@@ -44,9 +44,10 @@ def register_user():
     )
     
     new_user.set_password(password= data.get('password'))
-    org_name = Organisation(name = f"{new_user.firstName}'s Organisation")
-    new_user.organisation = org_name
     new_user.save()
+    org_name = Organisation(name = f"{new_user.firstName}'s Organisation")
+    org_name.save()
+    new_user.organisation = org_name
     
     return make_response(jsonify(
         {
@@ -60,8 +61,7 @@ def register_user():
                     "lastName": new_user.lastName,
                     "email": new_user.email,
                     "phone":new_user.phone
-                },
-                "organisation": [org_name]
+                }
             }
         }
     ), 201)

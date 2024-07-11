@@ -10,8 +10,8 @@ api_bp = Blueprint('api', __name__)
 @api_bp.get('/users/<int:userId>')
 def get_user(userId):
     try:
-        user = User.query.get(userId)
-        if user:
+        user = User.user_by_userId(userId = userId)
+        if user is not None:
             user_dict = user.to_dict()
             response = {
                 "status":"success",
